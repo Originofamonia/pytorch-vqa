@@ -1,6 +1,6 @@
 import os
 import json
-
+import numpy as np
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
@@ -8,10 +8,10 @@ import torchvision.transforms as transforms
 import config
 
 
-def batch_accuracy(predicted, true):
+def batch_accuracy(y_pred, y_true):
     """ Compute the accuracies for a batch of predictions and answers """
-    _, predicted_index = predicted.max(dim=1, keepdim=True)
-    agreeing = true.gather(dim=1, index=predicted_index)
+    _, predicted_index = y_pred.max(dim=1, keepdim=True)
+    agreeing = y_true.gather(dim=1, index=predicted_index)
     '''
     Acc needs to be averaged over all 10 choose 9 subsets of human answers.
     While we could just use a loop, surely this can be done more efficiently (and indeed, it can).
@@ -38,6 +38,15 @@ def batch_accuracy(predicted, true):
         min(agreeing * 0.3, 1)
     '''
     return (agreeing * 0.3).clamp(max=1)
+
+
+def numpy_accuracy(y_pred, y_true):
+    """
+    convert batch_accuracy fn to numpy
+    """
+    predicted_index = np.argmax(y_pred, axis=1)
+    agreeing = y_true[np.arange(len(y_true)), predicted_index]
+    return np.clip(agreeing * 0.3, a_min=None, a_max=1)
 
 
 def path_for(train=False, val=False, test=False, question=False, answer=False):
