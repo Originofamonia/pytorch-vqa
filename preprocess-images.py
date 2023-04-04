@@ -1,21 +1,24 @@
+import os
 import h5py
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torch.utils.data
-import torchvision.models as models
+from torchvision.models import resnet152, vgg19
 from tqdm import tqdm
 
 import config
 import data
 import utils
-from resnet import resnet as caffe_resnet
-
+# from resnet import resnet as caffe_resnet
+# os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.model = caffe_resnet.resnet152(pretrained=True)
+        self.model = resnet152(pretrained=False)
+        model_path = f'D:/CSE6363/hw4/pytorch-vqa/logs/resnet152-b121ed2d.pth'
+        self.model.load_state_dict(torch.load(model_path))
 
         def save_output(module, input, output):
             self.buffer = output
@@ -61,7 +64,7 @@ def main():
         i = j = 0
         with torch.no_grad():
             for ids, imgs in tqdm(loader):
-                imgs = Variable(imgs.cuda(non_blocking=True))
+                imgs = imgs.cuda()
                 out = net(imgs)
 
                 j = i + imgs.size(0)

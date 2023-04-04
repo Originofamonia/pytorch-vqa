@@ -23,7 +23,7 @@ def update_learning_rate(optimizer, iteration):
 
 
 total_iterations = 0
-torch.multiprocessing.set_start_method('spawn', True)
+# torch.multiprocessing.set_start_method('spawn', True)
 
 def run(net, loader, optimizer, tracker, train=False, prefix='', epoch=0):
     """ Run an epoch over the given loader """
@@ -41,7 +41,7 @@ def run(net, loader, optimizer, tracker, train=False, prefix='', epoch=0):
     loss_tracker = tracker.track('{}_loss'.format(prefix), tracker_class(**tracker_params))
     acc_tracker = tracker.track('{}_acc'.format(prefix), tracker_class(**tracker_params))
 
-    log_softmax = nn.LogSoftmax().cuda()
+    log_softmax = nn.LogSoftmax(dim=1)
     for v, q, a, idx, q_len in pbar:
         var_params = {
             'volatile': not train,
@@ -52,8 +52,8 @@ def run(net, loader, optimizer, tracker, train=False, prefix='', epoch=0):
         a = Variable(a.cuda(), **var_params)
         q_len = Variable(q_len.cuda(), **var_params)
 
-        out = net(v, q, q_len)
-        nll = -log_softmax(out, dim=1)
+        out, q_feat, words_feat, a_feat = net(v, q, q_len)
+        nll = -log_softmax(out)
         loss = (nll * a / 10).sum(dim=1).mean()
         acc = utils.batch_accuracy(out.data, a.data).cpu()
 

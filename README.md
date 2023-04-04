@@ -30,7 +30,7 @@ git clone https://github.com/Cyanogenoid/pytorch-vqa --recursive
   - `train_path`, `val_path`, `test_path` should contain the train, validation, and test `.jpg` images respectively.
 - Pre-process images (93 GiB of free disk space required for f16 accuracy) with [ResNet152 weights ported from Caffe][3] and vocabularies for questions and answers with:
 ```
-python preprocess-images.py
+python preprocess-images.py (generate resnet-14x14.h5 file)
 python preprocess-vocab.py
 ```
 - Train the model in `model.py` with:
@@ -45,12 +45,16 @@ python view-log.py <path to .pth log>
 ```
 
 
-## Python 3 dependencies (tested on Python 3.6.2)
-
-- torch
-- torchvision
+## Python 3 dependencies (tested on Python 3.7)
+CUDA=10.0
+- torch=1.2.0
+- torchvision=0.4.1
 - h5py
 - tqdm
+- Pillow=8.1.0
+- Numpy=1.19.0
+pip install https://download.pytorch.org/whl/cu100/torch-1.2.0-cp37-cp37m-win_amd64.whl
+
 
 
 
@@ -60,3 +64,4 @@ python view-log.py <path to .pth log>
 [3]: https://github.com/ruotianluo/pytorch-resnet
 [4]: http://visualqa.org/vqa_v1_download.html
 [5]: https://github.com/Cyanogenoid/pytorch-vqa/releases
+[6]: https://download.pytorch.org/whl/cu100/torch_stable.html
