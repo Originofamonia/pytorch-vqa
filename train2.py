@@ -11,8 +11,8 @@ import torch.backends.cudnn as cudnn
 from tqdm import tqdm
 
 import config
-import data
-import model
+import data2
+import model2
 import utils
 
 
@@ -42,17 +42,18 @@ def run(net, loader, optimizer, tracker, train=False, prefix='', epoch=0):
     acc_tracker = tracker.track('{}_acc'.format(prefix), tracker_class(**tracker_params))
 
     log_softmax = nn.LogSoftmax(dim=1)
-    for v, q, a, idx, q_len,image_id in pbar:
+    for batch in pbar:
+        v, q, a, q_len, idx, img, img_path, q_words, a_words = batch
         var_params = {
             'volatile': not train,
             'requires_grad': False,
         }
-        v = Variable(v.cuda(), **var_params)
+        img = Variable(img.cuda(), **var_params)
         q = Variable(q.cuda(), **var_params)
         a = Variable(a.cuda(), **var_params)
         q_len = Variable(q_len.cuda(), **var_params)
 
-        out, q_feat, words_feat, a_feat = net(v, q, q_len)
+        out, q_feat, words_feat, a_feat = net(img, q, q_len)
         nll = -log_softmax(out)
         loss = (nll * a / 10).sum(dim=1).mean()
         acc = utils.batch_accuracy(out.data, a.data).cpu()
@@ -98,10 +99,10 @@ def main():
 
     cudnn.benchmark = True
 
-    train_loader = data.get_loader(train=True)
-    val_loader = data.get_loader(val=True)
+    train_loader = data2.get_loader(train=True)
+    val_loader = data2.get_loader(val=True)
 
-    net = nn.DataParallel(model.Net(train_loader.dataset.num_tokens)).cuda()
+    net = nn.DataParallel(model2.Net(train_loader.dataset.num_tokens)).cuda()
     optimizer = optim.Adam([p for p in net.parameters() if p.requires_grad])
 
     tracker = utils.Tracker()

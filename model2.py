@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence
 
 import config
-
+from preprocess_images import Resnet
 
 class Net(nn.Module):
     """ Re-implementation of ``Show, Ask, Attend, and Answer: A Strong Baseline For Visual Question Answering'' [0]
@@ -18,6 +18,8 @@ class Net(nn.Module):
         question_features = 1024
         vision_features = config.output_features
         glimpses = 2  # change to 1?
+
+        self.resnet = Resnet()
 
         self.text = TextProcessor(
             embedding_tokens=embedding_tokens,
@@ -45,7 +47,8 @@ class Net(nn.Module):
                 if m.bias is not None:
                     m.bias.data.zero_()
 
-    def forward(self, v, q, q_len):
+    def forward(self, img, q, q_len):
+        v = self.resnet(img)
         q, words = self.text(q, list(q_len.data))  # q: [B, 1024], tanhed: [B, 23, 1024]
 
         v = v / (v.norm(p=2, dim=1, keepdim=True).expand_as(v) + 1e-8)
@@ -54,7 +57,7 @@ class Net(nn.Module):
 
         combined = torch.cat([v, q], dim=1)  # [B, 5120]
         answer = self.classifier(combined)  # [B, 3000]
-        return answer, q, words, a
+        return answer, q, words, a, v
 
 
 class Classifier(nn.Sequential):

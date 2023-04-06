@@ -13,9 +13,9 @@ import utils
 # from resnet import resnet as caffe_resnet
 # os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
-class Net(nn.Module):
+class Resnet(nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
+        super(Resnet, self).__init__()
         self.model = resnet152(pretrained=False)
         model_path = f'D:/CSE6363/hw4/pytorch-vqa/logs/resnet152-b121ed2d.pth'
         self.model.load_state_dict(torch.load(model_path))
@@ -46,7 +46,7 @@ def create_coco_loader(*paths):
 def main():
     cudnn.benchmark = True
 
-    net = Net().cuda()
+    net = Resnet().cuda()
     net.eval()
 
     loader = create_coco_loader(config.train_path, config.val_path)
