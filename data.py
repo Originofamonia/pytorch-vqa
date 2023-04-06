@@ -35,7 +35,7 @@ def get_loader(train=False, val=False, test=False):
 
 def collate_fn(batch):
     # put question lengths in descending order so that we can use packed sequences later
-    batch.sort(key=lambda x: x[-1], reverse=True)
+    batch.sort(key=lambda x: x[3], reverse=True)
     return data.dataloader.default_collate(batch)
 
 
@@ -55,12 +55,13 @@ class VQA(data.Dataset):
         self.vocab = vocab_json
         self.token_to_index = self.vocab['question']
         self.answer_to_index = self.vocab['answer']
+        self.idx_to_answer = {v:k for k, v in self.answer_to_index.items()}
 
         # q and a
-        self.questions = list(prepare_questions(questions_json))
-        self.answers = list(prepare_answers(answers_json))
-        self.questions = [self._encode_question(q) for q in self.questions]
-        self.answers = [self._encode_answers(a) for a in self.answers]
+        self.question_words = list(prepare_questions(questions_json))
+        self.answer_words = list(prepare_answers(answers_json))
+        self.questions = [self._encode_question(q) for q in self.question_words]
+        self.answers = [self._encode_answers(a) for a in self.answer_words]
 
         # v
         self.image_features_path = image_features_path
@@ -75,7 +76,7 @@ class VQA(data.Dataset):
     @property
     def max_question_length(self):
         if not hasattr(self, '_max_length'):
-            self._max_length = max(map(len, self.questions))
+            self._max_length = max(map(len, self.question_words))
         return self._max_length
 
     @property
@@ -139,19 +140,21 @@ class VQA(data.Dataset):
         img = dataset[index].astype('float32')
         return torch.from_numpy(img)
 
-    def __getitem__(self, item):
+    def __getitem__(self, idx):
         if self.answerable_only:
             # change of indices to only address answerable questions
-            item = self.answerable[item]
+            idx = self.answerable[idx]
 
-        q, q_length = self.questions[item]
-        a = self.answers[item]
-        image_id = self.coco_ids[item]
+        q, q_len = self.questions[idx]
+        q_words = ' '.join(self.question_words[idx])
+        a = self.answers[idx]  # tensor [3000]
+        a_words = self.idx_to_answer[a.argmax().item()]
+        image_id = self.coco_ids[idx]
         v = self._load_image(image_id)
         # since batches are re-ordered for PackedSequence's, the original question order is lost
         # we return `item` so that the order of (v, q, a) triples can be restored if desired
         # without shuffling in the dataloader, these will be in the order that they appear in the q and a json's.
-        return v, q, a, item, q_length
+        return v, q, a, q_len, idx, image_id, q_words, a_words
 
     def __len__(self):
         if self.answerable_only:

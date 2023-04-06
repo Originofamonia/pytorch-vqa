@@ -42,7 +42,7 @@ def run(net, loader, optimizer, tracker, train=False, prefix='', epoch=0):
     acc_tracker = tracker.track('{}_acc'.format(prefix), tracker_class(**tracker_params))
 
     log_softmax = nn.LogSoftmax(dim=1)
-    for v, q, a, idx, q_len in pbar:
+    for v, q, a, idx, q_len,image_id in pbar:
         var_params = {
             'volatile': not train,
             'requires_grad': False,

@@ -53,7 +53,7 @@ CUDA=10.0
 - tqdm
 - Pillow=8.1.0
 - Numpy=1.19.0
-pip install https://download.pytorch.org/whl/cu100/torch-1.2.0-cp37-cp37m-win_amd64.whl
+- pip install https://download.pytorch.org/whl/cu100/torch-1.2.0-cp37-cp37m-win_amd64.whl
 
 
 

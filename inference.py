@@ -35,7 +35,8 @@ def infer(net, loader, tracker, prefix=''):
 
     log_softmax = nn.LogSoftmax(dim=1)
 
-    for v, q, a, idx, q_len in pbar:
+    for batch in pbar:
+        v, q, a, q_len, idx, image_id, q_words, a_words = batch
         var_params = {
             'requires_grad': False,
         }
@@ -45,6 +46,8 @@ def infer(net, loader, tracker, prefix=''):
         q_len = Variable(q_len.cuda(), **var_params)
 
         out, q_feat, words_feat, a_feat = net(v, q, q_len)
+        y_pred = out.argmax(dim=1).detach().cpu().numpy()
+        y_pred_words = [loader.dataset.idx_to_answer[item] for item in y_pred]
         nll = -log_softmax(out)
         loss = (nll * a / 10).sum(dim=1).mean()
         acc = utils.batch_accuracy(out.data, a.data).cpu()
