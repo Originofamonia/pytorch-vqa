@@ -48,16 +48,16 @@ class Net(nn.Module):
                     m.bias.data.zero_()
 
     def forward(self, img, q, q_len):
-        v = self.resnet(img)
+        hv = self.resnet(img)  # hidden layer v
         q, words = self.text(q, list(q_len.data))  # q: [B, 1024], tanhed: [B, 23, 1024]
 
-        v = v / (v.norm(p=2, dim=1, keepdim=True).expand_as(v) + 1e-8)
+        v = hv / (hv.norm(p=2, dim=1, keepdim=True).expand_as(hv) + 1e-8)
         a = self.attention(v, q)  # [B, 2, 14, 14]
         v = apply_attention(v, a)  # [B, 4096]
 
         combined = torch.cat([v, q], dim=1)  # [B, 5120]
         answer = self.classifier(combined)  # [B, 3000]
-        return answer, q, words, a, v
+        return answer, q, words, a, hv
 
 
 class Classifier(nn.Sequential):
